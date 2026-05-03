@@ -1,42 +1,37 @@
 package com.bloodbank.dto;
 
-import java.time.LocalDate;
+import jakarta.validation.constraints.NotBlank;
 
-public class DonorResponse {
-    private Long id;
+public class ProfileUpdateRequest {
+    @NotBlank(message = "Email is required")
+    private String email;
+    
     private String name;
     private String bloodGroup;
     private String city;
     private String phoneNumber;
-    private LocalDate lastDonationDate;
+    private String lastDonationDate;
     private String profilePhotoBase64;
 
-    public DonorResponse() {}
-
-    public DonorResponse(Long id, String name, String bloodGroup, String city, 
-                        String phoneNumber, LocalDate lastDonationDate, String profilePhotoBase64) {
-        this.id = id;
-        this.name = name;
-        this.bloodGroup = bloodGroup;
-        this.city = city;
-        this.phoneNumber = phoneNumber;
-        this.lastDonationDate = lastDonationDate;
-        this.profilePhotoBase64 = profilePhotoBase64;
-    }
-
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    
     public String getBloodGroup() { return bloodGroup; }
     public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
+    
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }
+    
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-    public LocalDate getLastDonationDate() { return lastDonationDate; }
-    public void setLastDonationDate(LocalDate lastDonationDate) { this.lastDonationDate = lastDonationDate; }
+    
+    public String getLastDonationDate() { return lastDonationDate; }
+    public void setLastDonationDate(String lastDonationDate) { this.lastDonationDate = lastDonationDate; }
+    
     public String getProfilePhotoBase64() { return profilePhotoBase64; }
     public void setProfilePhotoBase64(String profilePhotoBase64) { this.profilePhotoBase64 = profilePhotoBase64; }
 }

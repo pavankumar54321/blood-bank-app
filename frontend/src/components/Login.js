@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { donorService } from '../services/api';
 
-const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
+const Login = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -30,18 +31,25 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
       if (result.success) {
         localStorage.setItem('isLoggedIn', 'true');
         
-        // Store basic donor data in localStorage for profile page
-        // In a real app, you would get this from the API response
-        const donorData = {
-          email: formData.email,
-          name: formData.email.split('@')[0], // Default name from email
-          bloodGroup: '', // Will be filled in profile
-          city: '', // Will be filled in profile
-          phoneNumber: '', // Will be filled in profile
-          lastDonationDate: '' // Will be filled in profile
-        };
+        // Store actual donor data from backend in localStorage for profile page
+        if (result.donorData) {
+          localStorage.setItem('donorData', JSON.stringify(result.donorData));
+        } else {
+          // Fallback if backend doesn't return data yet
+          const fallbackData = {
+            id: null,
+            email: formData.email,
+            name: formData.email.split('@')[0], 
+            bloodGroup: '', 
+            city: '', 
+            phoneNumber: '', 
+            lastDonationDate: '',
+            profilePhotoBase64: '',
+            isAdmin: formData.email.toLowerCase() === 'admin@bloodbank.com'
+          };
+          localStorage.setItem('donorData', JSON.stringify(fallbackData));
+        }
         
-        localStorage.setItem('donorData', JSON.stringify(donorData));
         onLoginSuccess();
       }
     } catch (error) {
@@ -104,12 +112,9 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
       <div className="form-footer">
         <p>
           Don't have an account?{' '}
-          <button 
-            onClick={onSwitchToRegister}
-            className="link-button"
-          >
+          <Link to="/register" className="link-button">
             Register here
-          </button>
+          </Link>
         </p>
       </div>
     </div>

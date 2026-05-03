@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { donorService } from '../services/api';
+import { autoCorrectCity } from '../utils/cityData';
 
-const Register = ({ onSwitchToLogin }) => {
+const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,8 +25,13 @@ const Register = ({ onSwitchToLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const correctedData = {
+      ...formData,
+      city: autoCorrectCity(formData.city) || formData.city
+    };
+
     try {
-      const result = await donorService.register(formData);
+      const result = await donorService.register(correctedData);
       setMessage(result.message);
       setIsError(!result.success);
       if (result.success) {
@@ -159,18 +166,9 @@ const Register = ({ onSwitchToLogin }) => {
       </form>
       <p style={{ textAlign: 'center', marginTop: '15px' }}>
         Already have an account?{' '}
-        <button 
-          onClick={onSwitchToLogin}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#007bff',
-            cursor: 'pointer',
-            textDecoration: 'underline'
-          }}
-        >
+        <Link to="/login" style={{ color: '#007bff', textDecoration: 'underline' }}>
           Login here
-        </button>
+        </Link>
       </p>
     </div>
   );

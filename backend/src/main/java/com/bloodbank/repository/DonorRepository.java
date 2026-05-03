@@ -16,7 +16,7 @@ public interface DonorRepository extends JpaRepository<Donor, Long> {
     Optional<Donor> findByEmail(String email);
     boolean existsByEmail(String email);
     
-    @Query("SELECT new com.bloodbank.dto.DonorResponse(d.name, d.bloodGroup, d.city, d.phoneNumber, d.lastDonationDate) " +
+    @Query("SELECT new com.bloodbank.dto.DonorResponse(d.id, d.name, d.bloodGroup, d.city, d.phoneNumber, d.lastDonationDate, d.profilePhotoBase64) " +
            "FROM Donor d WHERE " +
            "(:bloodGroup IS NULL OR d.bloodGroup = :bloodGroup) AND " +
            "(:city IS NULL OR LOWER(d.city) LIKE LOWER(CONCAT('%', :city, '%')))")

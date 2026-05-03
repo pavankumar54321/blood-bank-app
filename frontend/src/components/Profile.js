@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { donorService } from '../services/api';
+import { autoCorrectCity } from '../utils/cityData';
 
 const Profile = () => {
   const [donorData, setDonorData] = useState({
@@ -8,18 +9,37 @@ const Profile = () => {
     bloodGroup: '',
     city: '',
     phoneNumber: '',
-    lastDonationDate: ''
+    lastDonationDate: '',
+    profilePhotoBase64: ''
   });
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [medicalCertificate, setMedicalCertificate] = useState(null);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   useEffect(() => {
-    // In a real app, you would fetch donor data from API
     const userData = JSON.parse(localStorage.getItem('donorData') || '{}');
-    setDonorData(userData);
+    setDonorData({
+      name: userData.name || '',
+      email: userData.email || '',
+      bloodGroup: userData.bloodGroup || '',
+      city: userData.city || '',
+      phoneNumber: userData.phoneNumber || '',
+      lastDonationDate: userData.lastDonationDate || '',
+      profilePhotoBase64: userData.profilePhotoBase64 || ''
+    });
   }, []);
 
   const handleProfilePhotoUpload = (e) => {
@@ -35,10 +55,70 @@ const Profile = () => {
         setIsError(true);
         return;
       }
-      setProfilePhoto(file);
-      setMessage('Profile photo selected successfully!');
-      setIsError(false);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDonorData(prev => ({
+          ...prev,
+          profilePhotoBase64: reader.result
+        }));
+        setMessage('Profile photo selected!');
+        setIsError(false);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      setShowCamera(true);
+      // Allow react to render video element before assigning stream
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      setMessage('Could not access camera. Please check permissions.');
+      setIsError(true);
+    }
+  };
+
+  const takePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      
+      // Make canvas a square (like profile photos)
+      const size = Math.min(video.videoWidth, video.videoHeight);
+      canvas.width = size;
+      canvas.height = size;
+      
+      // Crop center of video
+      const startX = (video.videoWidth - size) / 2;
+      const startY = (video.videoHeight - size) / 2;
+      
+      context.drawImage(video, startX, startY, size, size, 0, 0, size, size);
+      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      
+      setDonorData(prev => ({
+        ...prev,
+        profilePhotoBase64: imageDataUrl
+      }));
+      setMessage('Profile photo updated from camera!');
+      setIsError(false);
+      stopCamera();
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+    }
+    setShowCamera(false);
   };
 
   const handleMedicalCertificateUpload = (e) => {
@@ -61,22 +141,33 @@ const Profile = () => {
   };
 
   const handleSaveProfile = async () => {
+    setIsLoading(true);
+    
+    // Auto-correct the city spelling before saving
+    const correctedData = {
+      ...donorData,
+      city: autoCorrectCity(donorData.city) || donorData.city
+    };
+    
     try {
-      // In a real app, you would send this to your backend
-      const formData = new FormData();
-      formData.append('profilePhoto', profilePhoto);
-      formData.append('medicalCertificate', medicalCertificate);
+      const result = await donorService.updateProfile(correctedData);
       
-      // Simulate API call
-      setTimeout(() => {
+      if (result.success) {
         setMessage('Profile updated successfully!');
         setIsError(false);
-        localStorage.setItem('donorData', JSON.stringify(donorData));
-      }, 1000);
-      
+        if (result.donorData) {
+          localStorage.setItem('donorData', JSON.stringify(result.donorData));
+          setDonorData(result.donorData);
+        }
+      } else {
+        setMessage(result.message || 'Failed to update profile');
+        setIsError(true);
+      }
     } catch (error) {
-      setMessage('Failed to update profile');
+      setMessage(error.message || 'Failed to update profile');
       setIsError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -120,9 +211,9 @@ const Profile = () => {
           <div className="profile-photo-section">
             <div className="photo-upload">
               <div className="photo-preview">
-                {profilePhoto ? (
+                {donorData.profilePhotoBase64 ? (
                   <img 
-                    src={URL.createObjectURL(profilePhoto)} 
+                    src={donorData.profilePhotoBase64} 
                     alt="Profile" 
                     className="profile-image"
                   />
@@ -133,15 +224,52 @@ const Profile = () => {
                   </div>
                 )}
               </div>
-              <label className="upload-button">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfilePhotoUpload}
-                  style={{ display: 'none' }}
-                />
-                Upload Profile Photo
-              </label>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
+                <label className="upload-button" style={{ cursor: 'pointer', padding: '10px 15px', background: '#6c757d', color: 'white', borderRadius: '8px', display: 'inline-block' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePhotoUpload}
+                    style={{ display: 'none' }}
+                  />
+                  📁 Upload File
+                </label>
+                <button 
+                  onClick={startCamera}
+                  type="button"
+                  style={{ cursor: 'pointer', padding: '10px 15px', background: '#28a745', color: 'white', borderRadius: '8px', border: 'none', fontWeight: '600' }}
+                >
+                  📸 Use Camera
+                </button>
+              </div>
+
+              {showCamera && (
+                <div style={{ marginTop: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '15px', border: '2px solid #e9ecef' }}>
+                  <video 
+                    ref={videoRef} 
+                    autoPlay 
+                    playsInline
+                    style={{ width: '100%', maxWidth: '250px', borderRadius: '50%', background: '#000', aspectRatio: '1', objectFit: 'cover' }}
+                  />
+                  <canvas ref={canvasRef} style={{ display: 'none' }} />
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
+                    <button 
+                      type="button" 
+                      onClick={takePhoto}
+                      style={{ padding: '8px 20px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      Capture Photo
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={stopCamera}
+                      style={{ padding: '8px 20px', background: '#dc3545', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -229,8 +357,9 @@ const Profile = () => {
             <button 
               className="save-button"
               onClick={handleSaveProfile}
+              disabled={isLoading}
             >
-              Save Changes
+              {isLoading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>

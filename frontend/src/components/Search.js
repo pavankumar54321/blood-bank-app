@@ -148,23 +148,59 @@ const Search = () => {
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <div className="search-header">
-        <h2>Find Blood Donors</h2>
-        <p>Search for donors by blood group and city - Spelling mistakes are automatically corrected!</p>
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
+      
+      {/* Impactful Hero Header */}
+      <div 
+        className="search-header" 
+        style={{ 
+          background: 'linear-gradient(135deg, #dc3545 0%, #a71d2a 100%)', 
+          color: 'white',
+          padding: '50px 20px',
+          borderRadius: '20px',
+          boxShadow: '0 10px 30px rgba(220, 53, 69, 0.3)',
+          marginBottom: '30px'
+        }}
+      >
+        <h2 style={{ color: 'white', fontSize: '3rem', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+          Find a Blood Donor
+        </h2>
+        <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '1.2rem', marginTop: '10px' }}>
+          Every drop counts. Connect with donors near you instantly.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="search-form">
-        <div className="search-fields">
-          <div className="form-group">
-            <label>Blood Group</label>
+      <form 
+        onSubmit={handleSubmit} 
+        className="search-form"
+        style={{
+          position: 'relative',
+          zIndex: 10
+        }}
+      >
+        <div 
+          className="search-fields"
+          style={{
+            background: 'white',
+            padding: '30px',
+            borderRadius: '15px',
+            boxShadow: '0 15px 40px rgba(0,0,0,0.12)',
+            display: 'grid',
+            gridTemplateColumns: '1fr 2fr auto',
+            gap: '20px',
+            alignItems: 'center'
+          }}
+        >
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label style={{ fontSize: '0.9rem', color: '#6c757d', marginBottom: '8px' }}>Blood Group</label>
             <select
               name="bloodGroup"
               value={searchData.bloodGroup}
               onChange={handleChange}
               className="form-input"
+              style={{ padding: '16px', fontSize: '1.1rem', fontWeight: '500' }}
             >
-              <option value="">All Blood Groups</option>
+              <option value="">Any Group</option>
               <option value="A+">A+</option>
               <option value="A-">A-</option>
               <option value="B+">B+</option>
@@ -176,41 +212,41 @@ const Search = () => {
             </select>
           </div>
           
-          <div className="form-group city-input-container">
-            <label>City (type at least 3 characters)</label>
+          <div className="form-group city-input-container" style={{ marginBottom: 0 }}>
+            <label style={{ fontSize: '0.9rem', color: '#6c757d', marginBottom: '8px' }}>City Location</label>
             <div className="city-input-wrapper">
               <input
                 type="text"
                 name="city"
-                placeholder="Start typing city name..."
+                placeholder="Enter city name..."
                 value={searchData.city}
                 onChange={handleChange}
                 className="form-input"
                 autoComplete="off"
+                style={{ padding: '16px', fontSize: '1.1rem', fontWeight: '500' }}
               />
               
               {showSuggestions && suggestions.length > 0 && (
                 <div className="suggestions-dropdown">
-                  <div className="suggestion-header">Did you mean:</div>
+                  <div className="suggestion-header">Suggestions</div>
                   {suggestions.map((suggestion, index) => (
                     <div
                       key={index}
                       className="suggestion-item"
                       onClick={() => handleSuggestionClick(suggestion)}
+                      style={{ fontSize: '1.1rem', padding: '12px 20px' }}
                     >
                       <span className="suggestion-text">{suggestion}</span>
-                      <span className="suggestion-hint">Click to search</span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
             
+            {/* Subtle correction message instead of bulky box */}
             {correctedCity && originalCity && (
-              <div className="correction-suggestion">
-                <span>Showing results for: </span>
-                <strong>{correctedCity}</strong>
-                <span> (you entered "{originalCity}")</span>
+              <div style={{ position: 'absolute', bottom: '-22px', left: '5px', fontSize: '0.85rem', color: '#28a745', fontWeight: '500' }}>
+                ✓ Searching for {correctedCity}
               </div>
             )}
           </div>
@@ -219,30 +255,34 @@ const Search = () => {
             type="submit"
             disabled={isLoading || !searchData.city}
             className="search-button"
+            style={{ 
+              padding: '16px 35px', 
+              fontSize: '1.1rem',
+              height: '100%',
+              marginTop: '28px'
+            }}
           >
             {isLoading ? (
               <>
                 <span className="spinner"></span>
-                Searching...
+                Searching
               </>
             ) : (
-              'Search Now'
+              'Search'
             )}
           </button>
         </div>
-        
-        <div className="search-tip">
-          <p>💡 <strong>Tip:</strong> You can type "mumbi", "delhi", "banglor", "hydrabad" - we'll correct it automatically!</p>
-        </div>
       </form>
 
-      {message && (
-        <div className={`search-message ${donors.length === 0 ? 'message-warning' : 'message-info'}`}>
-          {message}
-        </div>
-      )}
+      <div style={{ marginTop: '40px' }}>
+        {message && (
+          <div className={`search-message ${donors.length === 0 ? 'message-warning' : 'message-info'}`} style={{ borderRadius: '10px', fontSize: '1.1rem' }}>
+            {message}
+          </div>
+        )}
 
-      <DonorList donors={donors} />
+        <DonorList donors={donors} />
+      </div>
     </div>
   );
 };

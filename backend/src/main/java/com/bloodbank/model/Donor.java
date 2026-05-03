@@ -43,10 +43,17 @@ public class Donor {
     @Column(name = "last_donation_date")
     private LocalDate lastDonationDate;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String profilePhotoBase64;
+
+    @Column(name = "is_admin", nullable = false)
+    private boolean isAdmin = false;
+
     public Donor() {}
 
     public Donor(String name, String email, String password, String bloodGroup, 
-                 String city, String phoneNumber, LocalDate lastDonationDate) {
+                 String city, String phoneNumber, LocalDate lastDonationDate, String profilePhotoBase64) {
         this.name = name;
         this.email = email;
         this.password = password;
@@ -54,6 +61,7 @@ public class Donor {
         this.city = city;
         this.phoneNumber = phoneNumber;
         this.lastDonationDate = lastDonationDate;
+        this.profilePhotoBase64 = profilePhotoBase64;
     }
 
     // Getters and Setters
@@ -73,4 +81,8 @@ public class Donor {
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     public LocalDate getLastDonationDate() { return lastDonationDate; }
     public void setLastDonationDate(LocalDate lastDonationDate) { this.lastDonationDate = lastDonationDate; }
+    public String getProfilePhotoBase64() { return profilePhotoBase64; }
+    public void setProfilePhotoBase64(String profilePhotoBase64) { this.profilePhotoBase64 = profilePhotoBase64; }
+    public boolean isAdmin() { return isAdmin; }
+    public void setAdmin(boolean isAdmin) { this.isAdmin = isAdmin; }
 }
